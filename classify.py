@@ -41,7 +41,7 @@ def main():
         algo = RandomClassifier()
 
     if args.test:
-        db = TestDatabase(args.trainfile)
+        db = TestDatabase(args.trainfile, args.p)
     else:
         db = CuisineDatabase(args.trainfile, args.testfile)
 
