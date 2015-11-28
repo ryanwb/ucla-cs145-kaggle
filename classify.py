@@ -9,6 +9,7 @@ python classify.py -t -p 0.1 --trainfile train.json -a random
 import argparse
 from cuisinedatabase import *
 from randomclassifier import RandomClassifier
+from nbc import NaiveBayesClassifier
 
 def main():
 
@@ -19,7 +20,7 @@ def main():
 
     parser.add_argument("-p", type=float,
                     help="for --test, probability of assigning data entry to test instead of train")
-    
+
     parser.add_argument("--trainfile",
                     help="input training data file (known class)")
 
@@ -28,17 +29,19 @@ def main():
 
     parser.add_argument("-o", "--outputfile",
                     help="output file name (csv file)")
-    
+
     parser.add_argument("-a", "--algorithm",
                     help="the classification algorithm to use")
 
     args = parser.parse_args()
-    
+
     # parser.add_argument("-v", "--verbose", action="store_true", help="print extra output/data")
 
     algo = None
     if args.algorithm == "random":
         algo = RandomClassifier()
+    elif args.algorithm == "nbc":
+        algo = NaiveBayesClassifier()
 
     if args.test:
         db = TestDatabase(args.trainfile, args.p)
