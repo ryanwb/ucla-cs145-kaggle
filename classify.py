@@ -5,6 +5,7 @@ Main command line tool to run cuisine classifiers
 
 Example usage:
 python classify.py -t -p 0.1 --trainfile train.json -a random
+python classify.py -t -p 0.1 --trainfile train.json -a decisiontree -s 200
 """
 
 import argparse
@@ -35,6 +36,9 @@ def main():
     parser.add_argument("-a", "--algorithm",
                     help="the classification algorithm to use")
 
+    parser.add_argument("-s", "--splits", type=int,
+                    help="the number of most-frequent ingredients to use as possible splits in the decision tree classifier")
+
     args = parser.parse_args()
 
     # parser.add_argument("-v", "--verbose", action="store_true", help="print extra output/data")
@@ -45,7 +49,7 @@ def main():
     elif args.algorithm == "nbc":
         algo = NaiveBayesClassifier()
     elif args.algorithm == "decisiontree":
-        algo = DecisionTreeClassifier()
+        algo = DecisionTreeClassifier(args.splits)
 
     if args.test:
         db = TestDatabase(args.trainfile, args.p)

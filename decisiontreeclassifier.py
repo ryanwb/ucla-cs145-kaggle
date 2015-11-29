@@ -8,14 +8,18 @@ import math
 from classifier import Classifier
 
 # TODO: Possibly modify the greed to peek a couple levels deep into the recursion?
+# TODO: Does this decision tree cause overfitting?
+# TODO: Is there a better way to handle the case where a projected database is empty? Might be hurting the results
 
-# TODO: THIS USES RECURSION... and we probably can't hold all of that in memory
-
-# Decision should be one of the cuisine selections
+# Leaf node in the decision tree
+# decision is one of the cuisine selections
 class LeafNode(object):
     def __init__(self, decision = None):
         self.decision = decision
 
+# Internal node in the decision tree
+# split_criteria is an ingredient, and we follow yes_node or no_node
+# depending on whether that ingredient is present in the current recipe
 class InternalNode(object):
     def __init__(self, split_criteria = None, yes_node = None, no_node = None):
         self.split_criteria = split_criteria
@@ -24,27 +28,26 @@ class InternalNode(object):
 
 # This classifier assumes that every data point has been learn()'d before
 # calling classify(); on the first attempt to classify(), we will build the tree
+# n_splits is the number of candidate ingredients to consider as internal nodes (see construct_tree())
 class DecisionTreeClassifier(Classifier):
-
-    def __init__(self):
+    def __init__(self, n_splits):
         self._root = None
         self._data = [] # (ingredients list, cuisine) tuples
+        self._n_splits = n_splits
 
     def learn(self, ingredients, cuisine):
         self._data.append((ingredients, cuisine))
 
     # This uses entropy right now
-    # TODO: Try GINI index, etc.
-    # TODO: Very small numbers -- do we mess up the math here? Need more precision?
+    # TODO: Can try other ways to pick partition, like GINI index, etc.
     def pick_partition(self, proj_database, possible_splits):
-        # dict mapping a split to the entropy of that split
+        # split_results: dict mapping ingredient -> entropy of that split
         split_results = {}
         for split_ingredient in possible_splits:
-            # print "Looking at ingredient " + split_ingredient
             # counters for number of yes and number of no if we use this split
             n_yes = 0
             n_no = 0
-            # dicts mapping the cuisine to its count within this split
+            # dicts mapping cuisine -> count within this split
             yes = {}
             no = {}
             for (ingredients, cuisine) in proj_database:
@@ -60,32 +63,28 @@ class DecisionTreeClassifier(Classifier):
                         no[cuisine] += 1
                     else:
                         no[cuisine] = 1
-            # print str(n_yes) + " yes, " + str(n_no) + " no"
             entropy_yes = 0.0
             entropy_no = 0.0
             for cuisine in yes:
                 x = float(yes[cuisine])/float(n_yes)
                 entropy_yes -= x * math.log(x, 2)
-                # print "x, yes[cuisine], n_yes, entropy_yes = " + str(x) + " " + str(yes[cuisine]) + " " + str(n_yes) + " " + str(entropy_yes)
             for cuisine in no:
                 x = float(no[cuisine])/float(n_no)
                 entropy_no -= x * math.log(x, 2)
-            # print "ENTROPY NO: " + str(entropy_no)
-            # print "ENTROPY YES: " + str(entropy_yes)
             entropy = ((float(n_yes)/float(n_no + n_yes)) * entropy_yes) + ((float(n_no)/float(n_no + n_yes)) * entropy_no)
             split_results[split_ingredient] = entropy
             # print "Entropy of splitting at " + split_ingredient + " is " + str(entropy)
         return min(split_results, key = split_results.get)
 
     # At the top level, just call self.construct_tree()
-    # Returns a node
-    # TODO: Prevent overfitting
-    def construct_tree(self, proj_database = None, possible_splits = None, best_guess_sofar = None):
+    # Returns a node (recursive function)
+    def construct_tree(self, proj_database = None, possible_splits = None, best_guess_sofar = None, n_candidates = 200):
         if proj_database == None:
             proj_database = self._data
-        if possible_splits == None:  # top-level of recusion
-            print "Compiling list of possible splits..."
-
+        if possible_splits == None:  # this will be true at the top level of recusion
+            # Ideally, we would use every possible ingredient as a candidate for splitting
+            # This is very expensive; instead, here we will use the most common X ingredients
+            # as splitting candidates throughout the algorithm
             c = {}
             for (ingredients, cuisine) in proj_database:
                 for ingredient in ingredients:
@@ -94,19 +93,10 @@ class DecisionTreeClassifier(Classifier):
                     else:
                         c[ingredient] = 1
             c_sort = sorted(c, key = c.get, reverse = True)
-            # print "TOP INGREDIENTS: "
-            # for ingredient in c_sort[0:5]:
-            #     print ingredient + " " + str(c[ingredient])
-
             possible_splits = set()
-            # for (ingredients, cuisine) in proj_database:
-            #     for ingredient in ingredients:
-            #         possible_splits.add(ingredient)
-            for ingredient in c_sort[0:200]:
+            for ingredient in c_sort[0:n_candidates]:
                 possible_splits.add(ingredient)
-
-        # Pre-fetch the ratio in our projected database thus far in case we need it
-        # print "Getting the current best ratio..."
+        # Pre-fetch the "majority rules" best guess in this projected database in case we need it
         cuisines = {}
         total_count = 0
         for (ingredients, cuisine) in proj_database:
@@ -123,33 +113,32 @@ class DecisionTreeClassifier(Classifier):
                 best_cuisine = cuisine
         # print "Best ratio is " + best_cuisine + " at " + str(float(best_count)/float(total_count)) + " %"
 
-        # TODO: We have a hardcoded threshold here (might want to fiddle with it)
+        # Threshold for when to terminate as a leaf node
+        # In class, we used 1.0 as the threshold
         THRESHOLD = 0.95
-        # TODO: What to do here?
-        # Probably should use the best guess from the PREVIOUS level!
-        # Pass that in during the recursion?
+        # MODIFICATION FROM COURSE ALGORITHM:
+        # If the projected database is empty, we'll try using the best guess (majority rules)
+        # from the PREVIOUS level of recursion (as opposed to just having an undefined node)
         if len(proj_database) == 0:
             if best_guess_sofar == None:
                 best_guess_sofar = "italian"
-            print "Undefined! Picking " + best_guess_sofar + " !"
-            #raw_input("Press Enter to continue...")
+            print "Leaf node (default) chosen: " + best_guess_sofar
             return LeafNode(best_guess_sofar)
         if len(possible_splits) == 0 or float(best_count)/float(total_count) >= THRESHOLD:
-            print "Picking " + best_cuisine + " !"
-            #raw_input("Press Enter to continue...")
+            print "Leaf node chosen: " + best_cuisine
             return LeafNode(best_cuisine)
         else:
-            print "Searching for best partition..."
+            # print "Searching for best partition..."
             split_criteria = self.pick_partition(proj_database, possible_splits)
-            print "Deciding to split at " + split_criteria + " !"
+            print "Internal node chosen: " + split_criteria
             possible_splits.remove(split_criteria)
             no_proj = [x for x in proj_database if not (split_criteria in x[0])]
             yes_proj = [x for x in proj_database if (split_criteria in x[0])]
-            print "No: " + str(len(no_proj)) + "; Yes: " + str(len(yes_proj))
             no_node = self.construct_tree(no_proj, possible_splits.copy(), best_cuisine)
             yes_node = self.construct_tree(yes_proj, possible_splits.copy(), best_cuisine)
             return InternalNode(split_criteria = split_criteria, yes_node = yes_node, no_node = no_node)
 
+    # Recursively start at the root and apply the decision tree to a recipe
     def predict(self, ingredients):
         current_node = self._root
         while isinstance(current_node, InternalNode):
@@ -159,7 +148,8 @@ class DecisionTreeClassifier(Classifier):
                 current_node = current_node.no_node
         return current_node.decision
 
+    # Build the tree if needed; then call predict()
     def classify(self, ingredients):
         if self._root == None:
-            self._root = self.construct_tree()
+            self._root = self.construct_tree(n_candidates = self._n_splits)
         return self.predict(ingredients)
