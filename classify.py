@@ -9,6 +9,7 @@ python classify.py -t -p 0.1 --trainfile train.json -a random
 import argparse
 from cuisinedatabase import *
 from randomclassifier import RandomClassifier
+from decisiontreeclassifier import DecisionTreeClassifier
 
 def main():
 
@@ -39,6 +40,8 @@ def main():
     algo = None
     if args.algorithm == "random":
         algo = RandomClassifier()
+    elif args.algorithm == "decisiontree":
+        algo = DecisionTreeClassifier()
 
     if args.test:
         db = TestDatabase(args.trainfile, args.p)
