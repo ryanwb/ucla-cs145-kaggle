@@ -60,7 +60,7 @@ class NaiveBayesClassifier(Classifier):
                 else:
                     p_ingredients_given_class *= 0
 
-            if p_ingredient_given_class > max_probability:
+            if p_ingredients_given_class > max_probability:
                 max_probability = p_ingredients_given_class
                 max_probability_class = cuisine
 
