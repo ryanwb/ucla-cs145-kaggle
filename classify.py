@@ -4,8 +4,13 @@ classify.py
 Main command line tool to run cuisine classifiers
 
 Example usage:
+
+To test algorithm accuracy:
 python classify.py -t -p 0.1 --trainfile train.json -a random
 python classify.py -t -p 0.1 --trainfile train.json -a decisiontree -s 200
+
+To generate an actual submission:
+python classify.py --trainfile train.json --testfile test.json -a nbc -o output.csv
 """
 
 import argparse
