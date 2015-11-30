@@ -17,6 +17,7 @@ python classify.py --trainfile train.json --testfile test.json -a nbc -o output.
 
 import argparse
 from cuisinedatabase import *
+from matrixdatabase import MatrixDatabase
 from randomclassifier import RandomClassifier
 from nbc import NaiveBayesClassifier
 from decisiontreeclassifier import DecisionTreeClassifier
@@ -54,6 +55,15 @@ def main():
 
     # parser.add_argument("-v", "--verbose", action="store_true", help="print extra output/data")
 
+    if args.test:
+        db = TestDatabase(args.trainfile, args.p)
+    else:
+        db = CuisineDatabase(args.trainfile, args.testfile)
+
+    mdb = MatrixDatabase(db)
+
+    c = Classification()
+
     algo = None
     if args.algorithm == "random":
         algo = RandomClassifier()
@@ -62,30 +72,7 @@ def main():
     elif args.algorithm == "decisiontree":
         algo = DecisionTreeClassifier(args.splits)
     elif args.algorithm == "randomforest":
-        algo = RandomForestClassifier(args.estimators)
-
-    if args.test:
-        db = TestDatabase(args.trainfile, args.p)
-    else:
-        db = CuisineDatabase(args.trainfile, args.testfile)
-
-    c = Classification()
-
-    # Special handling for the random forest initialization process
-    if args.algorithm == "randomforest":
-        print "Learning all ingredients to build sparse matrix of data set..."
-        i = 0
-        entry = db.train(i)
-        while (entry != None):
-            algo.init_ingredients(entry["ingredients"], True)
-            i += 1
-            entry = db.train(i)
-        i = 0
-        entry = db.test(i)
-        while (entry != None):
-            algo.init_ingredients(entry["ingredients"], False)
-            i += 1
-            entry = db.test(i)
+        algo = RandomForestClassifier(args.estimators, mdb)
 
     print "Starting " + args.algorithm + " training..."
 

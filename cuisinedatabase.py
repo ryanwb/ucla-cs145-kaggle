@@ -21,14 +21,23 @@ class Database(object):
 class CuisineDatabase(Database):
     def __init__(self, train_filename, test_filename):
         # For now, we'll load the entire JSON files into memory...
-        # Later, we can change this to be a seek-based stream if needed
-        # Don't expose length of these arrays in case we change to seeking later
         self._trainf = train_filename
         self._testf = test_filename
         with open(self._trainf) as train_file:    
             self._train = json.load(train_file)
         with open(self._testf) as test_file:    
             self._test = json.load(test_file)
+        # Variables for the number of train and test recipes
+        self.n_train_recipes = len(self.train)
+        self.n_test_recipes = len(self.test)
+
+    # Returns the entire train data set
+    def train_set(self):
+        return self._train
+
+    # Returns the entire test data set
+    def test_set(self):
+        return self._test
 
     # Returns a training data dict, with keys "id", "cuisine", and "ingredients"
     def train(self, i):
@@ -62,6 +71,17 @@ class TestDatabase(Database):
                 self._test.append(entry)
             else:
                 self._train.append(entry)
+        # Variables for the number of train and test recipes
+        self.n_train_recipes = len(self._train)
+        self.n_test_recipes = len(self._test)
+
+    # Returns the entire train data set
+    def train_set(self):
+        return self._train
+
+    # Returns the entire test data set
+    def test_set(self):
+        return self._test
 
     # Returns a training data dict, with keys "id", "cuisine", and "ingredients"
     def train(self, i):
