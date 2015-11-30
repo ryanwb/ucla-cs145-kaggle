@@ -7,7 +7,9 @@ Example usage:
 
 To test algorithm accuracy:
 python classify.py -t -p 0.1 --trainfile train.json -a random
+python classify.py -t -p 0.1 --trainfile train.json -a nbc
 python classify.py -t -p 0.1 --trainfile train.json -a decisiontree -s 200
+python classify.py -t -p 0.1 --trainfile train.json -a decisiontree -e 100
 
 To generate an actual submission:
 python classify.py --trainfile train.json --testfile test.json -a nbc -o output.csv
@@ -18,6 +20,7 @@ from cuisinedatabase import *
 from randomclassifier import RandomClassifier
 from nbc import NaiveBayesClassifier
 from decisiontreeclassifier import DecisionTreeClassifier
+from randomforestclassifier import RandomForestClassifier
 
 def main():
 
@@ -42,7 +45,10 @@ def main():
                     help="the classification algorithm to use")
 
     parser.add_argument("-s", "--splits", type=int,
-                    help="the number of most-frequent ingredients to use as possible splits in the decision tree classifier")
+                    help="the number of most-frequent ingredients to use as possible splits in the decision tree classifier (e.g. 200)")
+
+    parser.add_argument("-e", "--estimators", type=int,
+                    help="the number of estimators to use in the random forest classifier (e.g. 100)")
 
     args = parser.parse_args()
 
@@ -55,6 +61,8 @@ def main():
         algo = NaiveBayesClassifier()
     elif args.algorithm == "decisiontree":
         algo = DecisionTreeClassifier(args.splits)
+    elif args.algorithm == "randomforest":
+        algo = RandomForestClassifier(args.estimators)
 
     if args.test:
         db = TestDatabase(args.trainfile, args.p)
@@ -62,6 +70,22 @@ def main():
         db = CuisineDatabase(args.trainfile, args.testfile)
 
     c = Classification()
+
+    # Special handling for the random forest initialization process
+    if args.algorithm == "randomforest":
+        print "Learning all ingredients to build sparse matrix of data set..."
+        i = 0
+        entry = db.train(i)
+        while (entry != None):
+            algo.init_ingredients(entry["ingredients"], True)
+            i += 1
+            entry = db.train(i)
+        i = 0
+        entry = db.test(i)
+        while (entry != None):
+            algo.init_ingredients(entry["ingredients"], False)
+            i += 1
+            entry = db.test(i)
 
     print "Starting " + args.algorithm + " training..."
 
