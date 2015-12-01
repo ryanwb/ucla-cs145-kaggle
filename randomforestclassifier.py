@@ -2,6 +2,7 @@
 randomforestclassifier.py
 
 Builds up a random forest classifier
+~71 pct accuracy, 2m43.737 execution with n_estimators=100
 """
 
 import math

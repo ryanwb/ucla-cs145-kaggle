@@ -9,7 +9,7 @@ To test algorithm accuracy:
 python classify.py -t -p 0.1 --trainfile train.json -a random
 python classify.py -t -p 0.1 --trainfile train.json -a nbc
 python classify.py -t -p 0.1 --trainfile train.json -a decisiontree -s 200
-python classify.py -t -p 0.1 --trainfile train.json -a decisiontree -e 100
+python classify.py -t -p 0.1 --trainfile train.json -a randomforest -e 100
 
 To generate an actual submission:
 python classify.py --trainfile train.json --testfile test.json -a nbc -o output.csv
@@ -22,6 +22,14 @@ from randomclassifier import RandomClassifier
 from nbc import NaiveBayesClassifier
 from decisiontreeclassifier import DecisionTreeClassifier
 from randomforestclassifier import RandomForestClassifier
+from linearsvclassifier import LinearSVClassifier
+from adaboostclassifier import AdaBoostClassifier
+from extratreeclassifier import ExtraTreeClassifier
+from labelpropagationclassifier import LabelPropagationClassifier
+from probabilitycalibrationclassifier import ProbabilityCalibrationClassifier
+from multinomialnbclassifier import MultinomialNBClassifier
+from baggingclassifier import BaggingClassifier
+from passiveagressiveclassifier import PassiveAgressiveClassifier
 
 def main():
 
@@ -73,6 +81,22 @@ def main():
         algo = DecisionTreeClassifier(args.splits)
     elif args.algorithm == "randomforest":
         algo = RandomForestClassifier(args.estimators, mdb)
+    elif args.algorithm == "linearsv":
+        algo = LinearSVClassifier(mdb)
+    elif args.algorithm == "adaboost":
+        algo = AdaBoostClassifier(args.estimators, mdb)
+    elif args.algorithm == "extratree":
+        algo = ExtraTreeClassifier(mdb)
+    elif args.algorithm == "labelpropagation":
+        algo = LabelPropagationClassifier(mdb)
+    elif args.algorithm == "probabilitycalibration":
+        algo = ProbabilityCalibrationClassifier(mdb)
+    elif args.algorithm == "multinomialnb":
+        algo = MultinomialNBClassifier(mdb)
+    elif args.algorithm == "bagging":
+        algo = BaggingClassifier(mdb)
+    elif args.algorithm == "passiveagressive":
+        algo = PassiveAgressiveClassifier(mdb)
 
     print "Starting " + args.algorithm + " training..."
 
