@@ -58,7 +58,8 @@ class NaiveBayesClassifier(Classifier):
                     p_ingredients_given_class *= (
                         float(self._classes[cuisine]["ingredients"][ingredient]) / float(self._total_num_ingredients))
                 else:
-                    p_ingredients_given_class *= 0
+                    # psuedocount: handles zero-out issue of encountering
+                    p_ingredients_given_class *= (1.0 / float(self._total_num_ingredients))
 
             if p_ingredients_given_class > max_probability:
                 max_probability = p_ingredients_given_class
