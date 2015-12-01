@@ -28,8 +28,8 @@ class CuisineDatabase(Database):
         with open(self._testf) as test_file:    
             self._test = json.load(test_file)
         # Variables for the number of train and test recipes
-        self.n_train_recipes = len(self.train)
-        self.n_test_recipes = len(self.test)
+        self.n_train_recipes = len(self._train)
+        self.n_test_recipes = len(self._test)
 
     # Returns the entire train data set
     def train_set(self):
