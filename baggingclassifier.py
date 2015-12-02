@@ -28,3 +28,4 @@ class BaggingClassifier(Classifier):
 			self._has_fit = True
 		output = self._bc.predict(self._matrix_database.make_row_from_recipe(ingredients))
 		return output[0]
+		

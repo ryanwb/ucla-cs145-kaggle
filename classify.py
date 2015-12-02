@@ -61,8 +61,6 @@ def main():
 
     args = parser.parse_args()
 
-    # parser.add_argument("-v", "--verbose", action="store_true", help="print extra output/data")
-
     if args.test:
         db = TestDatabase(args.trainfile, args.p)
     else:

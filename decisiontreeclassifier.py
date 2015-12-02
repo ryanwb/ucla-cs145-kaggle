@@ -7,10 +7,6 @@ Implements a decision tree classifier
 import math
 from classifier import Classifier
 
-# TODO: Possibly modify the greed to peek a couple levels deep into the recursion?
-# TODO: Does this decision tree cause overfitting?
-# TODO: Is there a better way to handle the case where a projected database is empty? Might be hurting the results
-
 # Leaf node in the decision tree
 # decision is one of the cuisine selections
 class LeafNode(object):
@@ -38,8 +34,7 @@ class DecisionTreeClassifier(Classifier):
     def learn(self, ingredients, cuisine):
         self._data.append((ingredients, cuisine))
 
-    # This uses entropy right now
-    # TODO: Can try other ways to pick partition, like GINI index, etc.
+    # This uses entropy as splitting criteria
     def pick_partition(self, proj_database, possible_splits):
         # split_results: dict mapping ingredient -> entropy of that split
         split_results = {}
